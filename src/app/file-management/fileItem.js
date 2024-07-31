@@ -264,8 +264,16 @@ export const CommonFileItem = React.memo((props) => {
   const onDoubleClick = () => {
     if (!is_dir) return;
     const _folderPaths = [...folderPaths];
-    _folderPaths.splice(currentFolderIndex + 1);
-    _folderPaths.push(props);
+
+    const disabledNext =
+      folderPaths.length === 0 || currentFolderIndex === folderPaths.length - 1;
+
+    if (disabledNext) {
+      _folderPaths.push(props);
+    } else {
+      _folderPaths.splice(currentFolderIndex + 1);
+      _folderPaths.push(props);
+    }
 
     updateFolderPaths(_folderPaths);
     updateFolderIndex(currentFolderIndex + 1);

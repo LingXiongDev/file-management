@@ -34,7 +34,7 @@ function ToolBar() {
         Math.max(currentFolderIndex + sign, folderPaths.length - 1)
       );
     } else if (sign < 0) {
-      updateFolderIndex(Math.min(currentFolderIndex + sign, 0));
+      updateFolderIndex(Math.max(currentFolderIndex + sign, 0));
     }
   };
 
