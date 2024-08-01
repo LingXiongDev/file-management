@@ -25,7 +25,6 @@ function FileManagement() {
     updateFoldsAndFiles,
     updateViewFolds,
     selectList,
-    singleFile,
   } = useGlobalStore((state) => state);
 
   useEffect(() => {
@@ -51,12 +50,62 @@ function FileManagement() {
     updateFoldsAndFiles(_foldsAndFiles);
   };
 
+  const deleteFn = (filename) => {
+    const body = [];
+    const dev_name = folderPaths[0]?.filename;
+
+    const _folderPaths = [...folderPaths];
+    _folderPaths.splice(currentFolderIndex + 1);
+
+    if (filename) {
+      // 单个删除
+      const file_path = getFilePath(_folderPaths, currentFolderIndex + 1);
+      body.push({
+        dev_name,
+        path: file_path,
+      });
+    } else {
+      selectList.forEach((n) => {
+        _folderPaths.push(n);
+        const file_path = getFilePath(_folderPaths, currentFolderIndex + 1);
+        body.push({
+          dev_name,
+          path: file_path,
+        });
+        _folderPaths.pop();
+      });
+    }
+
+    return request
+      .post("/api/deleteFolds", body)
+      .then(() => {
+        const delFiles = filename ? [filename] : selectList;
+
+        const _foldsAndFiles = foldsAndFiles.filter(
+          (f) => !delFiles.includes(f.filename)
+        );
+        updateFoldsAndFiles(_foldsAndFiles);
+        // 排出 selectList 中旧的名字
+        const _selectList = selectList.filter((n) => !delFiles.includes(n));
+        updateSelectList(_selectList);
+      })
+      .catch((err) => {
+        console.log(err);
+        updateMessageInfo({
+          open: true,
+          content: err?.response?.statusText || "服务器错误",
+          type: "error",
+        });
+      });
+  };
+
   const changeAction = useCallback(
     (action, filename) => {
       console.log(action);
       const fn = {
         [FileActionEnum.ATTRIBUTES]: toDetail,
         [FileActionEnum.RENAME]: rename,
+        [FileActionEnum.DELETE]: deleteFn,
       };
       fn[action]?.(filename);
     },
@@ -120,6 +169,9 @@ function FileManagement() {
           return { ...f, isEdit: false };
         });
         updateFoldsAndFiles(_foldsAndFiles);
+        // 排出 selectList 中旧的名字
+        const _selectList = selectList.filter((n) => n !== editFile?.filename);
+        updateSelectList(_selectList);
       })
       .catch((err) => {
         console.log(err);
