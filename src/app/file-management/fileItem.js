@@ -216,9 +216,9 @@ const FileItemWrapperV2 = styled.div`
 `;
 
 export const CommonFileItem = React.memo((props) => {
-  const { changeAction, onSave } = useGlobalContext();
+  const { onSave, onEditSave } = useGlobalContext();
 
-  const { create_time, filename, is_dir, isCreate } = props;
+  const { filename, is_dir, isCreate, isEdit } = props;
   const {
     folderPaths,
     currentFolderIndex,
@@ -229,9 +229,10 @@ export const CommonFileItem = React.memo((props) => {
     updateSingleFile,
     updateNewData,
     mode,
+    foldsAndFiles,
+    updateFoldsAndFiles,
   } = useGlobalStore((state) => state);
 
-  const ref = useRef(null);
   const [loading, setLoading] = useState(false);
 
   const allChecked = selectList.includes(filename);
@@ -321,15 +322,26 @@ export const CommonFileItem = React.memo((props) => {
     if (loading) return;
 
     setLoading(true);
-    onSave(filename).finally(() => {
-      setLoading(false);
-    });
+    if (!isEdit) {
+      onSave(filename).finally(() => {
+        setLoading(false);
+      });
+    } else {
+      onEditSave(filename).finally(() => {
+        setLoading(false);
+      });
+    }
   };
 
   const onClose = () => {
     if (loading) return;
     if (isCreate) {
       updateNewData(undefined);
+    }
+    if (isEdit) {
+      // 找到对应项，变成false
+      const _foldsAndFiles = foldsAndFiles.map((f) => ({ ...f, isEdit: false }));
+      updateFoldsAndFiles(_foldsAndFiles);
     }
   };
 
@@ -376,7 +388,7 @@ export const FileItem = React.memo((props) => {
     loading,
   } = props;
 
-  const { create_time, filename, is_dir, isCreate } = data || {};
+  const { create_time, filename, is_dir, isCreate, isEdit } = data || {};
 
   const ref = useRef(null);
 
@@ -389,17 +401,17 @@ export const FileItem = React.memo((props) => {
   return (
     <FileItemContainer
       className={`${allChecked ? "is-checked " : ""} ${
-        isCreate ? "is-create" : ""
+        isCreate || isEdit ? "is-create" : ""
       }`}
     >
       <div className="action">
         <div className="checkbox">
-          {!isCreate && (
+          {!isCreate && !isEdit && (
             <CheckBox allChecked={allChecked} onClick={handleSelect} />
           )}
         </div>
         <div className="rigth">
-          {!isCreate ? (
+          {!isCreate && !isEdit ? (
             <DropDown
               menus={menus}
               classname="more"
@@ -426,7 +438,7 @@ export const FileItem = React.memo((props) => {
       <FileItemWrapper onDoubleClick={onDoubleClick}>
         <div className="file-icon">{icon}</div>
         <div className="file-name">
-          {!isCreate ? (
+          {!isCreate && !isEdit ? (
             filename
           ) : (
             <input
@@ -481,7 +493,14 @@ export const FileItemV2 = React.memo((props) => {
     loading,
   } = props;
 
-  const { create_time, filename, is_dir, size_kb = 0, isCreate } = data || {};
+  const {
+    create_time,
+    filename,
+    is_dir,
+    size_kb = 0,
+    isCreate,
+    isEdit,
+  } = data || {};
 
   const { updateSingleFile } = useGlobalStore((state) => state);
 
@@ -495,7 +514,7 @@ export const FileItemV2 = React.memo((props) => {
 
   const onContextMenu = (e) => {
     e.preventDefault();
-    if (isCreate) return;
+    if (isCreate || isEdit) return;
 
     const {
       top = 0,
@@ -517,13 +536,13 @@ export const FileItemV2 = React.memo((props) => {
       onContextMenu={onContextMenu}
     >
       <div className="checkbox">
-        {!isCreate && (
+        {!isCreate && !isEdit && (
           <CheckBox allChecked={allChecked} onClick={handleSelect} />
         )}
       </div>
       <div className="file-icon">{icon}</div>
       <div className="file-name">
-        {!isCreate ? (
+        {!isCreate && !isEdit ? (
           filename
         ) : (
           <div className="flex items-center gap-[6px]">

@@ -35,25 +35,101 @@ function FileManagement() {
   }, [currentFolderIndex, updateSelectList]);
 
   const toDetail = (filename) => {
-    if (filename) {
-      const file = foldsAndFiles.find((f) => f.filename === filename);
-      updateViewFolds(file);
-    } else {
-      const fileId = selectList[0];
-      const file = foldsAndFiles.find((f) => f.filename === fileId);
-      updateViewFolds(file);
-    }
+    const fileId = filename || selectList[0];
+    const file = foldsAndFiles.find((f) => f.filename === fileId);
+    updateViewFolds(file);
+  };
+
+  const rename = (filename) => {
+    const fileId = filename || selectList[0];
+    const _foldsAndFiles = foldsAndFiles.map((f) => {
+      if (f.filename === fileId) {
+        return { ...f, isEdit: true };
+      }
+      return { ...f, isEdit: false };
+    });
+    updateFoldsAndFiles(_foldsAndFiles);
   };
 
   const changeAction = useCallback(
     (action, filename) => {
       console.log(action);
-      if (action === FileActionEnum.ATTRIBUTES) {
-        toDetail(filename);
-      }
+      const fn = {
+        [FileActionEnum.ATTRIBUTES]: toDetail,
+        [FileActionEnum.RENAME]: rename,
+      };
+      fn[action]?.(filename);
     },
-    [toDetail]
+    [toDetail, rename]
   );
+
+  const onEditSave = async (filename) => {
+    if (!filename) return;
+    if (!/^[^/?*:;{}\\]+$/.test(filename)) {
+      // 提示不合法
+      updateMessageInfo({
+        open: true,
+        content: "文件名不合法",
+        type: "error",
+      });
+      return;
+    }
+
+    const editFile = foldsAndFiles.find((f) => f.isEdit);
+    const checkFile = foldsAndFiles.find((f) => f.filename === filename);
+    if (checkFile && !checkFile.isEdit) {
+      // 提示不能重名
+      updateMessageInfo({
+        open: true,
+        content: "文件名不能重复",
+        type: "error",
+      });
+      return;
+    } else if (checkFile && checkFile.isEdit) {
+      // 自己编辑自己，没修改直接保存
+      const _foldsAndFiles = foldsAndFiles.map((f) => {
+        if (f.isEdit) {
+          return { ...f, filename, isEdit: false };
+        }
+        return { ...f, isEdit: false };
+      });
+      updateFoldsAndFiles(_foldsAndFiles);
+      return;
+    }
+
+    const dev_name = folderPaths[0]?.filename;
+
+    const _folderPaths = [...folderPaths];
+    _folderPaths.splice(currentFolderIndex + 1);
+    editFile?.filename && _folderPaths.push({ filename: editFile?.filename });
+
+    const file_path = getFilePath(_folderPaths, currentFolderIndex + 1);
+
+    // request
+    return request
+      .put("/api/renameFolds", {
+        dev_name,
+        file_path,
+        file_name: encodeURIComponent(filename),
+      })
+      .then(() => {
+        const _foldsAndFiles = foldsAndFiles.map((f) => {
+          if (f.isEdit) {
+            return { ...f, filename, isEdit: false };
+          }
+          return { ...f, isEdit: false };
+        });
+        updateFoldsAndFiles(_foldsAndFiles);
+      })
+      .catch((err) => {
+        console.log(err);
+        updateMessageInfo({
+          open: true,
+          content: err?.response?.statusText || "服务器错误",
+          type: "error",
+        });
+      });
+  };
 
   const onSave = async (filename) => {
     if (!filename) return;
@@ -102,7 +178,7 @@ function FileManagement() {
   };
 
   return (
-    <GlobalProvider value={{ changeAction, onSave }}>
+    <GlobalProvider value={{ changeAction, onSave, onEditSave }}>
       <div className="h-full w-full min-h-screen min-w-full flex flex-col">
         <Header />
         <div className="flex-1 h-full flex">
