@@ -9,7 +9,9 @@ import { useGlobalStore } from "@/app/store/global";
 import { useCallback, useEffect } from "react";
 import { GlobalProvider } from "../store/globalContext";
 import { getFilePath } from "../utils/tool";
+import { FileActionEnum } from "../utils/contants";
 import request from "@/app/api";
+import FileDetail from "../components/fileDetail";
 
 function FileManagement() {
   const {
@@ -21,6 +23,9 @@ function FileManagement() {
     foldsAndFiles,
     folderPaths,
     updateFoldsAndFiles,
+    updateViewFolds,
+    selectList,
+    singleFile,
   } = useGlobalStore((state) => state);
 
   useEffect(() => {
@@ -29,9 +34,26 @@ function FileManagement() {
     updateNewData(undefined);
   }, [currentFolderIndex, updateSelectList]);
 
-  const changeAction = useCallback((action) => {
-    console.log(action);
-  }, []);
+  const toDetail = (filename) => {
+    if (filename) {
+      const file = foldsAndFiles.find((f) => f.filename === filename);
+      updateViewFolds(file);
+    } else {
+      const fileId = selectList[0];
+      const file = foldsAndFiles.find((f) => f.filename === fileId);
+      updateViewFolds(file);
+    }
+  };
+
+  const changeAction = useCallback(
+    (action, filename) => {
+      console.log(action);
+      if (action === FileActionEnum.ATTRIBUTES) {
+        toDetail(filename);
+      }
+    },
+    [toDetail]
+  );
 
   const onSave = async (filename) => {
     if (!filename) return;
@@ -63,10 +85,20 @@ function FileManagement() {
     const file_path = getFilePath(_folderPaths, currentFolderIndex + 1);
 
     // request
-    return request.post("/api/saveFolds", { dev_name, file_path }).then(() => {
-      updateNewData(undefined);
-      updateFoldsAndFiles([...foldsAndFiles, { filename, is_dir: true }]);
-    });
+    return request
+      .post("/api/saveFolds", { dev_name, file_path })
+      .then(() => {
+        updateNewData(undefined);
+        updateFoldsAndFiles([...foldsAndFiles, { filename, is_dir: true }]);
+      })
+      .catch((err) => {
+        console.log(err);
+        updateMessageInfo({
+          open: true,
+          content: err?.response?.statusText || "服务器错误",
+          type: "error",
+        });
+      });
   };
 
   return (
@@ -86,6 +118,7 @@ function FileManagement() {
           </div>
         </div>
       </div>
+      <FileDetail />
     </GlobalProvider>
   );
 }

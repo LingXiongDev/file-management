@@ -22,6 +22,8 @@ export const useGlobalStore = create((set) => ({
     newData: undefined,
     /** 全局提示 */
     messageInfo: {},
+    /** 查看文件夹详情 */
+    viewFolds: undefined,
     // 更新当前选中的文件夹
     updateFolderPaths: (folderPaths) => set(() => ({ folderPaths })),
     /** 更新当前文件夹索引 */
@@ -42,4 +44,6 @@ export const useGlobalStore = create((set) => ({
     updateNewData: (newData) => set(() => ({ newData })),
     /** 新增文件 */
     updateMessageInfo: (messageInfo) => set(() => ({ messageInfo })),
+    /** 查看文件夹详情 */
+    updateViewFolds: (viewFolds) => set(() => ({ viewFolds })),
 }))

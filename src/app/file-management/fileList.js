@@ -26,7 +26,8 @@ function FileList() {
     mode,
     singleFile = {},
     updateSingleFile,
-    newData
+    newData,
+    updateMessageInfo,
   } = useGlobalStore((state) => state);
   const { changeAction } = useGlobalContext();
 
@@ -47,6 +48,14 @@ function FileList() {
       .get("/api/getAllFs", { dev_name, file_path })
       .then((res) => {
         updateFoldsAndFiles(res.data);
+      })
+      .catch((err) => {
+        console.log(err);
+        updateMessageInfo({
+          open: true,
+          content: err?.response?.statusText || "服务器错误",
+          type: "error",
+        });
       })
       .finally(() => {
         setLoading(false);
@@ -71,8 +80,8 @@ function FileList() {
   }, [sortField, foldsAndFiles]);
 
   const renderFiles = useMemo(() => {
-    return newData ? [newData, ...sortFiles] : sortFiles
-  }, [sortFiles, newData])
+    return newData ? [newData, ...sortFiles] : sortFiles;
+  }, [sortFiles, newData]);
 
   const menus = useMemo(() => {
     return [
@@ -136,7 +145,10 @@ function FileList() {
           updateSingleFile({});
         }}
         menus={menus}
-        onClick={changeAction}
+        onClick={(action) => {
+          changeAction(action, singleFile.filename);
+          updateSingleFile({});
+        }}
         {...singleFile}
       />
     </div>

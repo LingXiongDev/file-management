@@ -362,6 +362,7 @@ export const CommonFileItem = React.memo((props) => {
 
 export const FileItem = React.memo((props) => {
   const { changeAction } = useGlobalContext();
+  const { updateSingleFile } = useGlobalStore();
 
   const {
     data,
@@ -399,7 +400,13 @@ export const FileItem = React.memo((props) => {
         </div>
         <div className="rigth">
           {!isCreate ? (
-            <DropDown menus={menus} classname="more" onClick={changeAction}>
+            <DropDown
+              menus={menus}
+              classname="more"
+              onClick={(action) => {
+                changeAction(action, filename);
+              }}
+            >
               <div className="more">
                 <MoreIcon />
               </div>
