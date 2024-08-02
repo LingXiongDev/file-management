@@ -59,15 +59,25 @@ function FileManagement() {
 
     if (filename) {
       // 单个删除
-      const file_path = getFilePath(_folderPaths, currentFolderIndex + 1);
+      _folderPaths.push({ filename });
+      const file_path = getFilePath(
+        _folderPaths,
+        currentFolderIndex + 1,
+        false
+      );
       body.push({
         dev_name,
         path: file_path,
       });
+      _folderPaths.pop();
     } else {
       selectList.forEach((n) => {
-        _folderPaths.push(n);
-        const file_path = getFilePath(_folderPaths, currentFolderIndex + 1);
+        _folderPaths.push({ filename: n });
+        const file_path = getFilePath(
+          _folderPaths,
+          currentFolderIndex + 1,
+          false
+        );
         body.push({
           dev_name,
           path: file_path,
@@ -78,7 +88,16 @@ function FileManagement() {
 
     return request
       .post("/api/deleteFolds", body)
-      .then(() => {
+      .then((res) => {
+        if (res.code !== 2000) {
+          updateMessageInfo({
+            open: true,
+            content: res.msg || "服务器错误",
+            type: "error",
+          });
+          return;
+        }
+
         const delFiles = filename ? [filename] : selectList;
 
         const _foldsAndFiles = foldsAndFiles.filter(
@@ -161,7 +180,15 @@ function FileManagement() {
         file_path,
         file_name: encodeURIComponent(filename),
       })
-      .then(() => {
+      .then((res) => {
+        if (res.code !== 2000) {
+          updateMessageInfo({
+            open: true,
+            content: res.msg || "服务器错误",
+            type: "error",
+          });
+          return;
+        }
         const _foldsAndFiles = foldsAndFiles.map((f) => {
           if (f.isEdit) {
             return { ...f, filename, isEdit: false };
@@ -215,7 +242,15 @@ function FileManagement() {
     // request
     return request
       .post("/api/saveFolds", { dev_name, file_path })
-      .then(() => {
+      .then((res) => {
+        if (res.code !== 2000) {
+          updateMessageInfo({
+            open: true,
+            content: res.msg || "服务器错误",
+            type: "error",
+          });
+          return;
+        }
         updateNewData(undefined);
         updateFoldsAndFiles([...foldsAndFiles, { filename, is_dir: true }]);
       })

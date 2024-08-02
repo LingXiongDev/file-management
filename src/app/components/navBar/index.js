@@ -74,7 +74,7 @@ function NavBar() {
     if (folderPaths?.length === 0) return [];
     const first = folderPaths[0];
     const currentFolds = folderPaths[currentFolderIndex];
-    if (currentFolderIndex === 0) return [first.title, "全部文件"];
+    if (currentFolderIndex === 0) return [first?.title, "全部文件"];
     return [first.title, currentFolds.filename];
   }, [folderPaths, currentFolderIndex]);
 

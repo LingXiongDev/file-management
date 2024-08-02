@@ -1,16 +1,19 @@
 import dayjs from "dayjs";
 
-export const getFilePath = (paths = [], index = 1) => {
+export const getFilePath = (paths = [], index = 1, encode = true) => {
   let path = "";
 
   for (let i = 1; i <= index; i++) {
-    path += "/" + paths[i]?.filename;
+    if (paths[i]?.filename) {
+      path += "/" + paths[i]?.filename;
+    }
   }
 
   if (!path) {
     path = "/";
   }
-  return encodeURIComponent(path);
+
+  return encode ? encodeURIComponent(path) : path;
 };
 
 export const getType = (filename) => {

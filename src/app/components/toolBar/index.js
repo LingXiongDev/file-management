@@ -7,6 +7,8 @@ import DropDown from "../ui/dropDown";
 import { FileActionEnum } from "../../utils/contants";
 import { useGlobalContext } from "../../store/globalContext";
 import { generateDefaultFolderName } from "../../utils/tool";
+import Upload from "../upload";
+import UploadInfoModal from "../upload/uploadInfoModal";
 
 function ToolBar() {
   const {
@@ -103,7 +105,10 @@ function ToolBar() {
         >
           新建文件夹
         </UiButton>
-        <UiButton>上传</UiButton>
+        <Upload>
+          <UiButton>上传</UiButton>
+        </Upload>
+
         <UiButton
           disabled={checkedNull}
           onClick={() => {
@@ -131,6 +136,7 @@ function ToolBar() {
           </UiButton>
         </DropDown>
       </div>
+      <UploadInfoModal />
     </div>
   );
 }
