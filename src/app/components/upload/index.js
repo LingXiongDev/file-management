@@ -105,7 +105,7 @@ function Upload(props) {
         }
       }
 
-      const file_path = getFilePath([..._folderPaths], currentFolderIndex + 1, false);
+      const file_path = getFilePath([..._folderPaths], _folderPaths.length - 1, false);
 
       formData.append("field", file);
       formData.append("dev_name", dev_name);
