@@ -14,6 +14,7 @@ import { FileActionEnum, ActionEnum } from "../utils/contants";
 import request from "@/app/api";
 import FileDetail from "../components/fileDetail";
 import MoveOrCopyModal from "./moveModal";
+import axios from "axios";
 
 function FileManagement() {
   const {
@@ -29,7 +30,8 @@ function FileManagement() {
     selectList,
   } = useGlobalStore((state) => state);
 
-  const { updateVisibled, updateAction, updateActionFiles } = useMoveOrCopyStore((state) => state);
+  const { updateVisibled, updateAction, updateActionFiles } =
+    useMoveOrCopyStore((state) => state);
 
   useEffect(() => {
     updateSelectList([]);
@@ -123,7 +125,6 @@ function FileManagement() {
   };
 
   const actionFn = (filename, actionType) => {
-
     const body = [];
     const dev_name = folderPaths[0]?.filename;
 
@@ -162,6 +163,62 @@ function FileManagement() {
     updateAction(actionType);
   };
 
+  const download = (filename) => {
+    const dev_name = folderPaths[0]?.filename;
+  
+    const _folderPaths = [...folderPaths];
+    _folderPaths.splice(currentFolderIndex + 1);
+  
+    filename
+      ? _folderPaths.push({ filename })
+      : _folderPaths.push({ filename: selectList[0] });
+    const file_path = getFilePath(_folderPaths, currentFolderIndex + 1);
+  
+    return axios
+      .get('/api/download', {
+        params: {
+          dev_name,
+          file_path,
+        },
+        responseType: 'arraybuffer',  // 确保响应是二进制数据
+      })
+      .then((res) => {
+        // 创建一个 Blob 对象
+        const blob = new Blob([res.data], { type: 'application/octet-stream' });
+        const url = window.URL.createObjectURL(blob);
+  
+        // 创建一个下载链接
+        const link = document.createElement('a');
+        link.href = url;
+  
+        // 指定下载文件的名称
+        link.setAttribute('download', filename || 'downloaded_file');
+  
+        // 将链接添加到文档并触发点击事件
+        document.body.appendChild(link);
+        link.click();
+  
+        // 清理链接
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        updateMessageInfo({
+          open: true,
+          content: '文件下载成功',
+          type: 'success',
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+        updateMessageInfo({
+          open: true,
+          content: err?.response?.statusText || '文件下载失败',
+          type: 'error',
+        });
+      });
+  };
+  
+
   const changeAction = useCallback(
     (action, filename) => {
       console.log(action);
@@ -175,10 +232,11 @@ function FileManagement() {
         [FileActionEnum.REMOVE]: (filename) => {
           actionFn(filename, ActionEnum.REMOVE);
         },
+        [FileActionEnum.DOWNLOAD]: download,
       };
       fn[action]?.(filename);
     },
-    [toDetail, rename]
+    [toDetail, rename, actionFn, download]
   );
 
   const onEditSave = async (filename) => {

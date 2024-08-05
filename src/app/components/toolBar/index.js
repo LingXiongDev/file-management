@@ -29,6 +29,13 @@ function ToolBar() {
   const checkedNull = selectList.length === 0;
   const isOnlyOne = selectList.length === 1;
 
+  const isOnlyFile =
+    selectList.length === 1 &&
+    selectList.filter((s) => {
+      const it = foldsAndFiles.find((f) => f.filename === s);
+      return !it?.is_dir;
+    }).length === 1;
+
   const changeIndex = (sign) => {
     if (!sign) return;
     if (sign > 0) {
@@ -110,7 +117,7 @@ function ToolBar() {
         </Upload>
 
         <UiButton
-          disabled={checkedNull}
+          disabled={!isOnlyFile}
           onClick={() => {
             if (checkedNull) return;
             changeAction(FileActionEnum.DOWNLOAD);

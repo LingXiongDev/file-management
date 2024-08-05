@@ -314,9 +314,10 @@ export const CommonFileItem = React.memo((props) => {
       {
         label: "下载",
         value: FileActionEnum.DOWNLOAD,
+        disabled: is_dir
       },
     ];
-  }, []);
+  }, [is_dir]);
 
   const handleSave = (filename) => {
     if (loading) return;
