@@ -6,12 +6,14 @@ import ToolBar from "../components/toolBar";
 import NavBar from "../components/navBar";
 import FileList from "./fileList";
 import { useGlobalStore } from "@/app/store/global";
+import { useMoveOrCopyStore } from "@/app/store/moveOrCopy";
 import { useCallback, useEffect } from "react";
 import { GlobalProvider } from "../store/globalContext";
 import { getFilePath } from "../utils/tool";
-import { FileActionEnum } from "../utils/contants";
+import { FileActionEnum, ActionEnum } from "../utils/contants";
 import request from "@/app/api";
 import FileDetail from "../components/fileDetail";
+import MoveOrCopyModal from "./moveModal";
 
 function FileManagement() {
   const {
@@ -26,6 +28,8 @@ function FileManagement() {
     updateViewFolds,
     selectList,
   } = useGlobalStore((state) => state);
+
+  const { updateVisibled, updateAction, updateActionFiles } = useMoveOrCopyStore((state) => state);
 
   useEffect(() => {
     updateSelectList([]);
@@ -118,6 +122,46 @@ function FileManagement() {
       });
   };
 
+  const actionFn = (filename, actionType) => {
+
+    const body = [];
+    const dev_name = folderPaths[0]?.filename;
+
+    const _folderPaths = [...folderPaths];
+    _folderPaths.splice(currentFolderIndex + 1);
+
+    if (filename) {
+      _folderPaths.push({ filename });
+      const file_path = getFilePath(
+        _folderPaths,
+        currentFolderIndex + 1,
+        false
+      );
+      body.push({
+        dev_name,
+        src_path: file_path,
+      });
+      _folderPaths.pop();
+    } else {
+      selectList.forEach((n) => {
+        _folderPaths.push({ filename: n });
+        const file_path = getFilePath(
+          _folderPaths,
+          currentFolderIndex + 1,
+          false
+        );
+        body.push({
+          dev_name,
+          src_path: file_path,
+        });
+        _folderPaths.pop();
+      });
+    }
+    updateActionFiles(body);
+    updateVisibled(true);
+    updateAction(actionType);
+  };
+
   const changeAction = useCallback(
     (action, filename) => {
       console.log(action);
@@ -125,6 +169,12 @@ function FileManagement() {
         [FileActionEnum.ATTRIBUTES]: toDetail,
         [FileActionEnum.RENAME]: rename,
         [FileActionEnum.DELETE]: deleteFn,
+        [FileActionEnum.COPY]: (filename) => {
+          actionFn(filename, ActionEnum.COPY);
+        },
+        [FileActionEnum.REMOVE]: (filename) => {
+          actionFn(filename, ActionEnum.REMOVE);
+        },
       };
       fn[action]?.(filename);
     },
@@ -282,6 +332,7 @@ function FileManagement() {
         </div>
       </div>
       <FileDetail />
+      <MoveOrCopyModal />
     </GlobalProvider>
   );
 }

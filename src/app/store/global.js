@@ -55,7 +55,7 @@ export const useGlobalStore = create((set) => ({
     set((state) => {
       const files = [...state.files];
       files[index] = { ...files[index], status, progress };
-      debugger
+
       return { files };
     }),
 }));

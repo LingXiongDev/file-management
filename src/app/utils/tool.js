@@ -65,3 +65,9 @@ export function generateDefaultFolderName(existingNames) {
 
   return newName;
 }
+
+export function getFileName(path) {
+  if (!path) return '';
+  const parts = path.split("/");
+  return parts[parts.length - 1];
+}
